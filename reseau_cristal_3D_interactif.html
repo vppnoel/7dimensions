@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Réseau 3D Cristal – T L M</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 8px 12px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+<div id="info">
+  Réseau 3D cristal<br>
+  Axe T → droite<br>
+  Axe L ↑ haut<br>
+  Axe M → arrière<br>
+  (Rotation / zoom au doigt)
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// Scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf5f5f5);
+
+// Camera
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+camera.position.set(10, 10, 10);
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Controls (touch + mouse)
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.rotateSpeed = 0.5;
+controls.zoomSpeed = 0.8;
+
+// Light
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+dirLight.position.set(10, 20, 10);
+scene.add(dirLight);
+
+// Materials
+const materialNormal = new THREE.MeshStandardMaterial({ color: 0x1f77b4 });
+const materialHighlight = new THREE.MeshStandardMaterial({ color: 0x1f77b4 });
+
+// Geometry
+const sphereNormal = new THREE.SphereGeometry(0.12, 16, 16);
+const sphereHighlight = new THREE.SphereGeometry(0.22, 20, 20);
+
+// Points
+for (let T = -4; T <= 2; T++) {
+  for (let L = -1; L <= 4; L++) {
+    for (let M = -2; M <= 2; M++) {
+      const highlight = (T === 0 || L === 0 || M === 0);
+      const mesh = new THREE.Mesh(
+        highlight ? sphereHighlight : sphereNormal,
+        highlight ? materialHighlight : materialNormal
+      );
+      mesh.position.set(T, L, M);
+      scene.add(mesh);
+    }
+  }
+}
+
+// Axes
+const axisMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+
+function axisLine(from, to) {
+  const points = [];
+  points.push(new THREE.Vector3(...from));
+  points.push(new THREE.Vector3(...to));
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  return new THREE.Line(geometry, axisMaterial);
+}
+
+// T axis
+scene.add(axisLine([-4,0,0], [2,0,0]));
+// L axis
+scene.add(axisLine([0,-1,0], [0,4,0]));
+// M axis
+scene.add(axisLine([0,0,-2], [0,0,2]));
+
+// Planes (translucent)
+const planeMaterial = new THREE.MeshStandardMaterial({
+  color: 0x999999,
+  transparent: true,
+  opacity: 0.15,
+  side: THREE.DoubleSide
+});
+
+// T = 0 plane (L-M)
+const planeT = new THREE.Mesh(
+  new THREE.PlaneGeometry(6, 6),
+  planeMaterial
+);
+planeT.rotation.y = Math.PI / 2;
+scene.add(planeT);
+
+// L = 0 plane (T-M)
+const planeL = new THREE.Mesh(
+  new THREE.PlaneGeometry(6, 6),
+  planeMaterial
+);
+planeL.rotation.x = Math.PI / 2;
+scene.add(planeL);
+
+// M = 0 plane (T-L)
+const planeM = new THREE.Mesh(
+  new THREE.PlaneGeometry(6, 6),
+  planeMaterial
+);
+scene.add(planeM);
+
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>
