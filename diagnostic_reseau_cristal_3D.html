@@ -33,23 +33,23 @@ Sinon → la scène DOIT être visible.
 function fail(msg){
   document.getElementById("info").innerHTML += "<br><span style='color:red'>ERREUR : "+msg+"</span>";
 }
+window.addEventListener("error", function(e){
+  fail(e.message || "erreur JS inconnue");
+});
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"
-        onerror="fail('three.min.js non chargé')"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"
-        onerror="fail('OrbitControls non chargé')"></script>
-
-<script>
-if (typeof THREE === "undefined") {
-  fail("THREE est undefined → CDN bloqué ou offline");
-  throw new Error("THREE missing");
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
+  }
 }
+</script>
 
-if (typeof THREE.OrbitControls === "undefined") {
-  fail("OrbitControls indisponible");
-}
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 console.log("Three.js version:", THREE.REVISION);
 
@@ -66,7 +66,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Controls
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 // Lights
